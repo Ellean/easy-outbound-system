@@ -1,0 +1,723 @@
+openapi: 3.0.3
+info:
+  title: 简易出库系统 API
+  description: Easy Outbound System - RESTful API 接口文档
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: https://github.com/Ellean/easy-outbound-system
+
+servers:
+  - url: http://localhost:3000
+    description: 本地开发环境
+  - url: https://api.example.com
+    description: 生产环境
+
+tags:
+  - name: Products
+    description: 产品管理
+  - name: Outbound Orders
+    description: 出库单管理
+  - name: Statistics
+    description: 统计分析
+
+paths:
+  # ========== 产品管理 ==========
+  /api/v1/products:
+    get:
+      tags: [Products]
+      summary: 获取产品列表
+      description: 分页获取产品列表，支持关键字搜索和状态筛选
+      parameters:
+        - name: keyword
+          in: query
+          description: 搜索关键字（产品型号或名称）
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: 产品状态
+          schema:
+            type: string
+            enum: [active, inactive]
+        - name: page
+          in: query
+          description: 页码
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: pageSize
+          in: query
+          description: 每页数量
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductResponse'
+
+    post:
+      tags: [Products]
+      summary: 创建产品
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductDto'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/products/search:
+    get:
+      tags: [Products]
+      summary: 搜索产品
+      description: 用于下拉框的产品搜索
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: 搜索关键字
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+  /api/v1/products/{id}:
+    get:
+      tags: [Products]
+      summary: 获取产品详情
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          description: 产品不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Products]
+      summary: 更新产品
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductDto'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+
+    delete:
+      tags: [Products]
+      summary: 删除产品
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ========== 出库单管理 ==========
+  /api/v1/outbound-orders:
+    get:
+      tags: [Outbound Orders]
+      summary: 获取出库单列表
+      parameters:
+        - name: startDate
+          in: query
+          description: 开始日期
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: 结束日期
+          schema:
+            type: string
+            format: date
+        - name: customer
+          in: query
+          description: 客户名称
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOutboundOrderResponse'
+
+    post:
+      tags: [Outbound Orders]
+      summary: 创建出库单
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOutboundOrderDto'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboundOrderDetailResponse'
+
+  /api/v1/outbound-orders/{orderNo}:
+    get:
+      tags: [Outbound Orders]
+      summary: 获取出库单详情
+      parameters:
+        - name: orderNo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboundOrderDetailResponse'
+
+    put:
+      tags: [Outbound Orders]
+      summary: 更新出库单
+      parameters:
+        - name: orderNo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOutboundOrderDto'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboundOrderDetailResponse'
+
+    delete:
+      tags: [Outbound Orders]
+      summary: 删除出库单
+      parameters:
+        - name: orderNo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ========== 统计分析 ==========
+  /api/v1/statistics/products:
+    get:
+      tags: [Statistics]
+      summary: 产品出库统计
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductStatisticsResponse'
+
+  /api/v1/statistics/customers:
+    get:
+      tags: [Statistics]
+      summary: 客户统计
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerStatisticsResponse'
+
+  /api/v1/statistics/dashboard:
+    get:
+      tags: [Statistics]
+      summary: 仪表板概览
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardOverviewResponse'
+
+# ========== 组件定义 ==========
+components:
+  schemas:
+    # 通用响应
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+
+    SuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+
+    # 产品相关
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        name:
+          type: string
+        specification:
+          type: string
+        price:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [active, inactive]
+        remarks:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateProductDto:
+      type: object
+      required:
+        - model
+        - name
+        - specification
+        - price
+      properties:
+        model:
+          type: string
+        name:
+          type: string
+        specification:
+          type: string
+        price:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [active, inactive]
+          default: active
+        remarks:
+          type: string
+
+    UpdateProductDto:
+      type: object
+      properties:
+        name:
+          type: string
+        specification:
+          type: string
+        price:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [active, inactive]
+        remarks:
+          type: string
+
+    ProductResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Product'
+
+    ProductListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Product'
+
+    PaginatedProductResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Product'
+                total:
+                  type: integer
+                page:
+                  type: integer
+                pageSize:
+                  type: integer
+                totalPages:
+                  type: integer
+
+    # 出库单相关
+    OutboundOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_no:
+          type: string
+        outbound_date:
+          type: string
+          format: date
+        customer:
+          type: string
+        total_amount:
+          type: number
+          format: double
+        remarks:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    OutboundItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_no:
+          type: string
+        product_model:
+          type: string
+        product_name:
+          type: string
+        specification:
+          type: string
+        unit_price:
+          type: number
+          format: double
+        quantity:
+          type: number
+          format: double
+        subtotal:
+          type: number
+          format: double
+        created_at:
+          type: string
+          format: date-time
+
+    OutboundOrderDetail:
+      allOf:
+        - $ref: '#/components/schemas/OutboundOrder'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/OutboundItem'
+
+    CreateOutboundOrderDto:
+      type: object
+      required:
+        - outbound_date
+        - items
+      properties:
+        outbound_date:
+          type: string
+          format: date
+        customer:
+          type: string
+        remarks:
+          type: string
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - product_model
+              - quantity
+            properties:
+              product_model:
+                type: string
+              quantity:
+                type: number
+                format: double
+                minimum: 0.01
+
+    UpdateOutboundOrderDto:
+      type: object
+      properties:
+        outbound_date:
+          type: string
+          format: date
+        customer:
+          type: string
+        remarks:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              product_model:
+                type: string
+              quantity:
+                type: number
+                format: double
+
+    OutboundOrderDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/OutboundOrderDetail'
+
+    PaginatedOutboundOrderResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OutboundOrder'
+                total:
+                  type: integer
+                page:
+                  type: integer
+                pageSize:
+                  type: integer
+                totalPages:
+                  type: integer
+
+    # 统计相关
+    ProductStatistics:
+      type: object
+      properties:
+        model:
+          type: string
+        name:
+          type: string
+        specification:
+          type: string
+        current_price:
+          type: number
+        total_quantity:
+          type: number
+        total_amount:
+          type: number
+        order_count:
+          type: integer
+        last_outbound_date:
+          type: string
+          format: date-time
+
+    CustomerStatistics:
+      type: object
+      properties:
+        customer:
+          type: string
+        order_count:
+          type: integer
+        total_amount:
+          type: number
+        last_order_date:
+          type: string
+          format: date-time
+
+    DashboardOverview:
+      type: object
+      properties:
+        total_orders:
+          type: integer
+        total_amount:
+          type: number
+        total_customers:
+          type: integer
+        avg_order_amount:
+          type: number
+
+    ProductStatisticsResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductStatistics'
+
+    CustomerStatisticsResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomerStatistics'
+
+    DashboardOverviewResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/DashboardOverview'
