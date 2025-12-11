@@ -13,26 +13,27 @@ export class StatisticsService {
   }): Promise<ProductStatistics[]> {
     const { startDate, endDate, limit = 50 } = params;
     
-    let dateFilter = '';
+    const whereConditions: string[] = [];
     const queryParams: any[] = [];
     let paramIndex = 1;
 
-    if (startDate && endDate) {
-      dateFilter = `
-        WHERE oi.created_at >= $${paramIndex}::date 
-        AND oi.created_at < $${paramIndex + 1}::date + INTERVAL '1 day'
-      `;
-      queryParams.push(startDate, endDate);
-      paramIndex += 2;
-    } else if (startDate) {
-      dateFilter = `WHERE oi.created_at >= $${paramIndex}::date`;
+    // 构建日期过滤条件
+    if (startDate) {
+      whereConditions.push(`oi.created_at >= $${paramIndex}::date`);
       queryParams.push(startDate);
       paramIndex++;
-    } else if (endDate) {
-      dateFilter = `WHERE oi.created_at < $${paramIndex}::date + INTERVAL '1 day'`;
+    }
+    
+    if (endDate) {
+      whereConditions.push(`oi.created_at < $${paramIndex}::date + INTERVAL '1 day'`);
       queryParams.push(endDate);
       paramIndex++;
     }
+
+    // 构建完整的 WHERE 子句
+    const dateFilter = whereConditions.length > 0 
+      ? `AND ${whereConditions.join(' AND ')}`
+      : '';
 
     const query = `
       SELECT 
@@ -45,7 +46,7 @@ export class StatisticsService {
         COALESCE(COUNT(DISTINCT oi.order_no), 0) as order_count,
         MAX(oi.created_at) as last_outbound_date
       FROM products p
-      LEFT JOIN outbound_items oi ON p.model = oi.product_model ${dateFilter ? 'AND ' + dateFilter.replace('WHERE ', '') : ''}
+      LEFT JOIN outbound_items oi ON p.model = oi.product_model ${dateFilter}
       WHERE p.status = 'active'
       GROUP BY p.model, p.name, p.specification, p.price
       HAVING COUNT(DISTINCT oi.order_no) > 0

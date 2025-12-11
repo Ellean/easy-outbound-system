@@ -22,8 +22,14 @@ cd easy-outbound-system
 
 ```bash
 cp server/.env.example server/.env
-# 编辑 server/.env，修改数据库密码等配置
+# ⚠️ 重要：修改 server/.env 中的数据库密码和其他敏感配置
+# 生产环境必须使用强密码！
 ```
+
+**安全提示**：
+- 修改 `DB_PASSWORD` 为强密码（至少16位，包含大小写字母、数字和特殊字符）
+- 修改 docker-compose.yml 中的 `POSTGRES_PASSWORD` 为相同的强密码
+- 不要将 `.env` 文件提交到版本控制系统
 
 3. **启动服务**
 

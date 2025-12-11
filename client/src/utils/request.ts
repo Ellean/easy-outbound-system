@@ -15,7 +15,8 @@ const request: AxiosInstance = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
-    // 可以在这里添加 token 等认证信息
+    // TODO: 实现身份验证
+    // 当实现身份验证时，在这里添加 token
     // const token = localStorage.getItem('token');
     // if (token) {
     //   config.headers.Authorization = `Bearer ${token}`;

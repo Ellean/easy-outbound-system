@@ -65,11 +65,12 @@ export const errorHandler = (
     timestamp: new Date().toISOString(),
   };
 
-  // 开发环境返回错误堆栈
+  // 开发环境返回错误堆栈（仅包含安全信息）
   if (process.env.NODE_ENV === 'development') {
     response.data = {
+      message: err.message,
       stack: err.stack,
-      error: err,
+      name: err.name,
     };
   }
 

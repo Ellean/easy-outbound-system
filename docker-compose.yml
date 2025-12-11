@@ -1,5 +1,11 @@
 version: '3.8'
 
+# ⚠️ 安全提示：
+# 生产环境部署前，请务必修改以下默认密码：
+# 1. POSTGRES_PASSWORD
+# 2. DB_PASSWORD
+# 建议使用环境变量文件 (.env) 管理敏感配置
+
 services:
   # PostgreSQL 数据库
   postgres:
