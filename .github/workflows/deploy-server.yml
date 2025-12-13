@@ -112,6 +112,47 @@ jobs:
               git pull origin main
             fi
             
+            # 创建根目录 .env 文件（供 docker-compose 使用）
+            echo "配置 Docker Compose 环境变量"
+            cat > .env << 'EOF'
+            # 数据库配置
+            POSTGRES_DB=${{ secrets.DB_NAME || 'outbound_system' }}
+            POSTGRES_USER=${{ secrets.DB_USER || 'postgres' }}
+            POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
+            
+            # 服务器环境变量
+            DB_HOST=${{ secrets.DB_HOST || 'postgres' }}
+            DB_PORT=${{ secrets.DB_PORT || '5432' }}
+            DB_NAME=${{ secrets.DB_NAME || 'outbound_system' }}
+            DB_USER=${{ secrets.DB_USER || 'postgres' }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            PORT=${{ secrets.SERVER_PORT || '3000' }}
+            NODE_ENV=${{ secrets.NODE_ENV || 'production' }}
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN || '*' }}
+            LOG_LEVEL=${{ secrets.LOG_LEVEL || 'info' }}
+            EOF
+            
+            # 创建服务器环境变量文件（供服务器应用使用）
+            echo "配置服务器环境变量"
+            cat > server/.env << 'EOF'
+            # 数据库配置
+            DB_HOST=${{ secrets.DB_HOST || 'postgres' }}
+            DB_PORT=${{ secrets.DB_PORT || '5432' }}
+            DB_NAME=${{ secrets.DB_NAME || 'outbound_system' }}
+            DB_USER=${{ secrets.DB_USER || 'postgres' }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            
+            # 服务器配置
+            PORT=${{ secrets.SERVER_PORT || '3000' }}
+            NODE_ENV=${{ secrets.NODE_ENV || 'production' }}
+            
+            # CORS 配置
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN || '*' }}
+            
+            # 日志级别
+            LOG_LEVEL=${{ secrets.LOG_LEVEL || 'info' }}
+            EOF
+            
             # 拉取最新 Docker 镜像
             docker compose pull server
             

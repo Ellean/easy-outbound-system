@@ -17,6 +17,17 @@
 - **DEPLOY_PORT**: SSH 端口（可选，默认 22）
 - **DEPLOY_PATH**: 项目在服务器上的部署路径（可选，默认 `/opt/easy-outbound-system`）
 
+#### 服务器环境变量（必需）
+- **DB_PASSWORD**: 数据库密码（必需，强密码）
+- **DB_HOST**: 数据库主机（可选，默认 `postgres`）
+- **DB_PORT**: 数据库端口（可选，默认 `5432`）
+- **DB_NAME**: 数据库名称（可选，默认 `outbound_system`）
+- **DB_USER**: 数据库用户（可选，默认 `postgres`）
+- **SERVER_PORT**: 服务器端口（可选，默认 `3000`）
+- **NODE_ENV**: 运行环境（可选，默认 `production`）
+- **CORS_ORIGIN**: CORS 来源（可选，默认 `*`）
+- **LOG_LEVEL**: 日志级别（可选，默认 `info`）
+
 ## 配置步骤
 
 ### 1. 生成 SSH 密钥对
@@ -89,6 +100,56 @@ your_dockerhub_username
 dckr_pat_xxxxxxxxxxxxxxxxxxxxx
 ```
 
+**DB_PASSWORD**（必需）
+```
+your_strong_database_password_here
+```
+
+**DB_HOST**（可选）
+```
+postgres
+```
+
+**DB_PORT**（可选）
+```
+5432
+```
+
+**DB_NAME**（可选）
+```
+outbound_system
+```
+
+**DB_USER**（可选）
+```
+postgres
+```
+
+**SERVER_PORT**（可选）
+```
+3000
+```
+
+**NODE_ENV**（可选）
+```
+production
+```
+
+**CORS_ORIGIN**（可选）
+```
+*
+```
+
+**LOG_LEVEL**（可选）
+```
+info
+```
+
+**重要提示**：
+- `DB_PASSWORD` 是必需的，必须设置强密码
+- 其他环境变量都有默认值，可以不设置
+- 生产环境建议设置 `CORS_ORIGIN` 为具体的域名而不是 `*`
+
 ### 4. 服务器环境准备
 
 #### 必需的软件安装
@@ -112,7 +173,9 @@ git --version
 
 #### 首次部署准备（可选）
 
-**注意**：GitHub Actions 工作流会自动处理目录创建和代码克隆，但您也可以手动准备：
+**注意**：GitHub Actions 工作流会自动处理所有部署步骤，无需手动准备。
+
+如果您想手动准备（不推荐）：
 
 ```bash
 # 手动克隆项目（可选，工作流会自动处理）
@@ -121,20 +184,21 @@ sudo chown $USER:$USER /opt/easy-outbound-system
 cd /opt/easy-outbound-system
 git clone https://github.com/Ellean/easy-outbound-system.git .
 
-# 配置环境变量（首次部署必需）
-cp server/.env.example server/.env
-# 编辑 server/.env，设置数据库密码等
-nano server/.env
+# 环境变量文件会由 GitHub Actions 自动生成，无需手动配置
+# 如果手动部署，可以复制示例文件：
+# cp server/.env.example server/.env
+# nano server/.env
 
 # 首次启动（可选，工作流会自动启动）
 docker compose up -d
 ```
 
-**推荐方式**：
-- 仅安装 Docker 和 Git
-- 配置 SSH 密钥
-- 配置 GitHub Secrets
-- 让 GitHub Actions 自动完成首次部署
+**推荐方式（完全自动化）**：
+1. 仅在服务器上安装 Docker 和 Git
+2. 配置 SSH 密钥
+3. 在 GitHub 中配置所有 Secrets（包括环境变量）
+4. 推送代码或手动触发工作流
+5. GitHub Actions 自动完成所有部署步骤（包括 .env 文件生成）
 
 ## 工作流程说明
 
@@ -157,7 +221,8 @@ docker compose up -d
 
 3. **deploy**: 部署到服务器
    - 通过 SSH 连接到服务器
-   - 拉取最新代码
+   - 克隆或拉取最新代码
+   - **自动生成 .env 文件**（从 GitHub Secrets）
    - 拉取最新 Docker 镜像
    - 重启服务
    - 清理旧镜像
@@ -193,23 +258,50 @@ else
   git pull origin main
 fi
 
-# 5. 拉取最新的 Docker 镜像
+# 5. 创建服务器环境变量文件（从 GitHub Secrets）
+echo "配置服务器环境变量"
+cat > server/.env << 'EOF'
+# 数据库配置
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=outbound_system
+DB_USER=postgres
+DB_PASSWORD=<从 secrets.DB_PASSWORD 读取>
+
+# 服务器配置
+PORT=3000
+NODE_ENV=production
+
+# CORS 配置
+CORS_ORIGIN=*
+
+# 日志级别
+LOG_LEVEL=info
+EOF
+
+# 6. 拉取最新的 Docker 镜像
 docker compose pull server
 
-# 6. 重启服务（仅重启 server，不影响数据库）
+# 7. 重启服务（仅重启 server，不影响数据库）
 docker compose up -d --no-deps server
 
-# 7. 清理旧的 Docker 镜像释放空间
+# 8. 清理旧的 Docker 镜像释放空间
 docker image prune -f
 
-# 8. 显示服务状态
+# 9. 显示服务状态
 docker compose ps
 ```
 
 **首次部署支持**：
 - 自动检测并创建部署目录
 - 自动克隆代码仓库（首次）或拉取更新（后续）
+- **自动生成 .env 文件**（从 GitHub Secrets，无需手动配置）
 - 无需手动准备项目目录
+
+**环境变量管理**：
+- 所有敏感配置（如数据库密码）都通过 GitHub Secrets 管理
+- 每次部署自动更新 .env 文件
+- 不会将敏感信息提交到代码仓库
 
 ## 安全建议
 
