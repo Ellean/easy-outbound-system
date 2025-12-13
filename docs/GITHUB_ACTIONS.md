@@ -91,29 +91,50 @@ dckr_pat_xxxxxxxxxxxxxxxxxxxxx
 
 ### 4. 服务器环境准备
 
-确保服务器已安装必要的软件：
+#### 必需的软件安装
+
+确保服务器已安装 Docker 和 Git：
 
 ```bash
-# 安装 Docker 和 Docker Compose
+# 安装 Docker
 curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 
-# 安装 Docker Compose
+# 安装 Docker Compose V2（如果未包含）
 sudo apt-get update
 sudo apt-get install docker-compose-plugin
 
-# 克隆项目（首次部署）
-cd /opt
-git clone https://github.com/Ellean/easy-outbound-system.git
-cd easy-outbound-system
+# 验证安装
+docker --version
+docker compose version
+git --version
+```
 
-# 配置环境变量
+#### 首次部署准备（可选）
+
+**注意**：GitHub Actions 工作流会自动处理目录创建和代码克隆，但您也可以手动准备：
+
+```bash
+# 手动克隆项目（可选，工作流会自动处理）
+sudo mkdir -p /opt/easy-outbound-system
+sudo chown $USER:$USER /opt/easy-outbound-system
+cd /opt/easy-outbound-system
+git clone https://github.com/Ellean/easy-outbound-system.git .
+
+# 配置环境变量（首次部署必需）
 cp server/.env.example server/.env
 # 编辑 server/.env，设置数据库密码等
+nano server/.env
 
-# 首次启动
-docker-compose up -d
+# 首次启动（可选，工作流会自动启动）
+docker compose up -d
 ```
+
+**推荐方式**：
+- 仅安装 Docker 和 Git
+- 配置 SSH 密钥
+- 配置 GitHub Secrets
+- 让 GitHub Actions 自动完成首次部署
 
 ## 工作流程说明
 
@@ -150,24 +171,45 @@ docker-compose up -d
 部署脚本会在服务器上执行以下操作：
 
 ```bash
-# 1. 进入项目目录
-cd /opt/easy-outbound-system
+# 1. 设置部署路径
+DEPLOY_PATH="/opt/easy-outbound-system"
 
-# 2. 拉取最新代码（包含 docker-compose.yml 等配置）
-git pull origin main
+# 2. 检查并创建目录（首次部署）
+if [ ! -d "$DEPLOY_PATH" ]; then
+  echo "首次部署：创建目录"
+  sudo mkdir -p "$DEPLOY_PATH"
+  sudo chown $USER:$USER "$DEPLOY_PATH"
+fi
 
-# 3. 拉取最新的 Docker 镜像
-docker-compose pull server
+# 3. 进入项目目录
+cd "$DEPLOY_PATH"
 
-# 4. 重启服务（仅重启 server，不影响数据库）
-docker-compose up -d --no-deps server
+# 4. 克隆或更新代码仓库
+if [ ! -d ".git" ]; then
+  echo "首次部署：克隆代码仓库"
+  git clone https://github.com/Ellean/easy-outbound-system.git .
+else
+  echo "更新代码仓库"
+  git pull origin main
+fi
 
-# 5. 清理旧的 Docker 镜像释放空间
+# 5. 拉取最新的 Docker 镜像
+docker compose pull server
+
+# 6. 重启服务（仅重启 server，不影响数据库）
+docker compose up -d --no-deps server
+
+# 7. 清理旧的 Docker 镜像释放空间
 docker image prune -f
 
-# 6. 显示服务状态
-docker-compose ps
+# 8. 显示服务状态
+docker compose ps
 ```
+
+**首次部署支持**：
+- 自动检测并创建部署目录
+- 自动克隆代码仓库（首次）或拉取更新（后续）
+- 无需手动准备项目目录
 
 ## 安全建议
 
@@ -209,7 +251,7 @@ sudo usermod -aG docker $DEPLOY_USER
 
 查看日志：
 ```bash
-docker-compose logs server
+docker compose logs server
 ```
 
 ## 手动触发部署
@@ -233,9 +275,9 @@ cd /opt/easy-outbound-system
 docker images | grep easy-outbound-server
 
 # 回滚到特定版本（使用 commit sha）
-docker-compose down server
+docker compose down server
 docker tag username/easy-outbound-server:SHA username/easy-outbound-server:latest
-docker-compose up -d server
+docker compose up -d server
 ```
 
 或者直接使用之前的 commit：
@@ -243,5 +285,5 @@ docker-compose up -d server
 ```bash
 # 回退代码到之前的版本
 git checkout <previous-commit-sha>
-docker-compose up -d --force-recreate server
+docker compose up -d --force-recreate server
 ```
