@@ -234,7 +234,7 @@ _截图即将添加_
 
 ## 📝 许可证
 
-本项目基于 MIT 许可证开源 - 查看 [LICENSE](LICENSE) 文件了解详情
+本项目基于 GNU General Public License v3.0 开源 - 查看 [LICENSE](LICENSE) 文件了解详情
 
 ## 📮 联系方式
 
