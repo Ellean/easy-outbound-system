@@ -1,0 +1,52 @@
+# Node
+node_modules/
+dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Rust
+target/
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+*.exe
+*.dmg
+*.app
+*.deb
+*.AppImage
+
+# Test
+coverage/
+.nyc_output/
+
+# Tauri
+src-tauri/target/
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
