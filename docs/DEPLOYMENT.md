@@ -1,6 +1,25 @@
 # 部署文档
 
-## 使用 Docker Compose 部署（推荐）
+## 自动化部署（推荐）
+
+使用 GitHub Actions 自动部署到服务器。详细配置请参考 [GitHub Actions 配置文档](./GITHUB_ACTIONS.md)。
+
+**优势**：
+- 自动化构建和部署
+- 代码检查和测试
+- 一键回滚
+- 部署历史记录
+
+**配置步骤**：
+1. 在 GitHub 仓库中配置 Secrets（服务器地址、SSH 密钥等）
+2. 推送代码到 `main` 分支
+3. GitHub Actions 自动执行：构建 → 测试 → 打包 Docker 镜像 → 部署到服务器
+
+详细步骤请查看 [GITHUB_ACTIONS.md](./GITHUB_ACTIONS.md)
+
+---
+
+## 使用 Docker Compose 部署（手动）
 
 ### 前置要求
 
